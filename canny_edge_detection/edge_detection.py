@@ -12,11 +12,11 @@ class Canny:
         return cv2.GaussianBlur(img, kernel_size, 0)  # cv2.BORDER_DEFAULT
 
     def _gradient_magnitude_angle(self, img):
-        sobel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-        sobel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+        sobel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], np.float32)
+        sobel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]], np.float32)
         I_x = cv2.filter2D(img, -1, sobel_x)
         I_y = cv2.filter2D(img, -1, sobel_y)
-        magnitude = np.sqrt(I_x**2 + I_y**2)
+        magnitude = np.hypot(I_x, I_y)
         magnitude = ((magnitude - np.min(magnitude)) / np.max(magnitude)) * 255
         angle = np.arctan2(I_y, I_x) * 180 / np.pi
         return magnitude, angle
@@ -24,14 +24,17 @@ class Canny:
     def _non_max_suppression(self, magnitude, angle):
         h, w = magnitude.shape
         finer_gradient_img = np.zeros((h, w))
+        angle[angle < 0] += 180
         for j in range(h):
             for i in range(w):
                 try:
                     neighbour_1 = 255
                     neighbour_2 = 255
                     current_pixel = magnitude[j, i]
-                    current_angle = abs(angle[j, i])
-                    if current_angle < 22.5:
+                    current_angle = angle[j, i]
+                    if (current_angle < 22.5) or (
+                        current_angle >= 157.5 and current_angle < 180
+                    ):
                         neighbour_1 = magnitude[j, i - 1]
                         neighbour_2 = magnitude[j, i + 1]
                     elif current_angle >= 22.5 and current_angle < 67.5:
@@ -117,5 +120,5 @@ class Canny:
 
 
 if __name__ == "__main__":
-    canny = Canny("canny_edge_detection/girl.png")
-    canny(kernel_size=(7, 7))
+    canny = Canny("canny_edge_detection/lenna.png")
+    canny(kernel_size=(5, 5))
