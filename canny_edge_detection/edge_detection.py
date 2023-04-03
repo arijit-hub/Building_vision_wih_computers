@@ -116,9 +116,9 @@ class Canny:
         edge_type = self._thresholding(finer_gradient_img)
         edge_img = self._hysteresis_thresholding(finer_gradient_img, edge_type)
         finer_gradient_img = finer_gradient_img.astype("int32")
-        cv2.imwrite("canny_edge_detection/output/edge_img.png", edge_img)
+        cv2.imwrite("canny_edge_detection/output/edge_img_girl.png", edge_img)
 
 
 if __name__ == "__main__":
-    canny = Canny("canny_edge_detection/lenna.png")
-    canny(kernel_size=(5, 5))
+    canny = Canny("canny_edge_detection/girl.png")
+    canny(kernel_size=(7, 7))
