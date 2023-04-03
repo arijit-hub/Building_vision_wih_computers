@@ -9,7 +9,7 @@ class Canny:
         self.img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
 
     def _blur(self, img, kernel_size):
-        return cv2.GaussianBlur(img, kernel_size, cv2.BORDER_DEFAULT)
+        return cv2.GaussianBlur(img, kernel_size, 0)  # cv2.BORDER_DEFAULT
 
     def _gradient_magnitude_angle(self, img):
         sobel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
@@ -17,6 +17,7 @@ class Canny:
         I_x = cv2.filter2D(img, -1, sobel_x)
         I_y = cv2.filter2D(img, -1, sobel_y)
         magnitude = np.sqrt(I_x**2 + I_y**2)
+        magnitude = ((magnitude - np.min(magnitude)) / np.max(magnitude)) * 255
         angle = np.arctan2(I_y, I_x) * 180 / np.pi
         return magnitude, angle
 
@@ -90,7 +91,14 @@ class Canny:
                             or (edge_type[j + 1, i] == "strong")
                             or (edge_type[j + 1, i + 1] == "strong")
                         ):
+                            edge_type[j, i] = "strong"
                             edge_img[j, i] = 255
+                        else:
+                            edge_img[j, i] = 0
+                    elif edge_type[j, i] == "noise":
+                        edge_img[j, i] = 0
+                    elif edge_type[j, i] == "strong":
+                        edge_img[j, i] = 255
 
                 except IndexError:
                     continue
@@ -104,13 +112,10 @@ class Canny:
         finer_gradient_img = self._non_max_suppression(grad_magnitude, grad_angle)
         edge_type = self._thresholding(finer_gradient_img)
         edge_img = self._hysteresis_thresholding(finer_gradient_img, edge_type)
-        finer_gradient_img = (
-            (finer_gradient_img - np.min(finer_gradient_img)) / np.max(finer_gradient_img)
-        ) * 255
         finer_gradient_img = finer_gradient_img.astype("int32")
-        cv2.imwrite("canny_edge_detection/output/edge_img.png", finer_gradient_img)
+        cv2.imwrite("canny_edge_detection/output/edge_img.png", edge_img)
 
 
 if __name__ == "__main__":
-    canny = Canny("filters/lenna.png")
-    canny(kernel_size=(3, 3))
+    canny = Canny("canny_edge_detection/girl.png")
+    canny(kernel_size=(7, 7))
